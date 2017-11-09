@@ -1,0 +1,165 @@
+
+
+Finding Lane Lines on the Road
+
+11/09/2017
+
+This is a write-up for Project 1 in Udacity’s Self-Driving Car Nanodegree
+
+Project repository: https://github.com/Dataprof/Finding-Lane-Lines-on-the-Road
+
+Project Rubric: https://review.udacity.com/#!/rubrics/322/view
+
+When we drive, we use our eyes to decide where to go. The lines on the road that show us where the lanes are act as our
+constant reference for where to steer the vehicle. Naturally, one of the first things we would like to do in developing a self-driving car is to automatically
+detect lane lines using an algorithm.
+
+In this project you will detect lane lines in images using Python and OpenCV. OpenCV means “Open-Source Computer Vision”,
+which is a package that has many useful tools for analyzing images.
+More about the nanodegree program: https://www.udacity.com/drive
+
+Pipeline
+
+The purpose of the pipeline is to compose
+several different operations together, apply them to an image, and produce an
+annotated image that shows where a lane on a road would be.
+
+My pipeline consists of multiple steps:
+
+
+ Reading image
+ Applying a color mask (YellowLeft and  WhiteRight)
+ Performing edge detection
+ Selecting regions to search for lane lines
+ Using the Hough transform to find line     segments
+ Extrapolating the lane from the line
+     segments provided by the Hough transform
+ Creating a Video
+
+
+Reading image
+
+Read
+the image and know statistics of the image.
+
+cv2.imread
+s used to read the image.  It will read
+the image in BGR mode. Need to convert it to RGB.
+
+imgtemp = cv2.imread('test_images/solidWhiteRight.jpg')
+
+image = cv2.cvtColor(imgtemp, cv2.COLOR_BGR2RGB)
+
+print('This image is:', type(image), 'with dimensions:', image.shape)
+
+Applying the color mask
+
+
+
+Lanes on the road are typically found as a
+single color and designed to stand-out from the background. We can use this
+fact to help us filter out elements in the image that are irrelevant. To
+accomplish this, we use something called a color mask. A color mask can be
+applied to an image to remove all colors except for the ones we specify.
+
+For this project I created two masks: one for
+white lanes and one for yellow lanes.
+
+White lane
+
+
+
+ 
+
+The white lane I manually found values that
+seemed close and looked to provide good results when ran against the example
+images.
+
+Yellow lane
+
+
+
+The yellow lane was a bit more involved since
+its not as simple as setting all the channels to the same value. I used a color
+picker to grab the RGB components and plugged it into colorizer to transform it to HSV space. Using the cv2.cvtColor() function to convert the image from BGR colorspace to HSV, I was
+able to create a mask that isolated the yellow lane.
+
+Performing edge detection
+
+
+
+I then use the canny edge detector to pull out
+edges in the image. 
+
+cv.Canny(image,
+edges, threshold1, threshold2, aperture_size=3)
+
+Selecting regions to search for lane lines
+
+
+
+After performing edge detection, there is still
+a fair amount of irrelevant edges that need to be ignored if we are to find the
+lane lines. We remove a majority of the image and focus on a region that we
+would most likely find lane lines.
+
+Using the Hough transform to find line segments
+
+
+
+The Hough transform is the operation in the
+pipeline that actually finds line segments in the image and provides the most
+information of where the lanes lines could be. Initially I performed the Hough
+transform on a single region which provided some spurious results. When I
+adjusted the pipeline to instead use two regions (one of the left line and one
+for the right), it significantly increased the accuracy.
+
+A large amount of time was spent tweaking the
+parameters and manually tuning the Hough transform to provide good results.
+
+Extrapolating the lane from the line segments provided by the Hough
+transform
+
+
+
+Once we have the line segments produced by the Hough
+transform, we can find a line that would be suitable for annotating the initial
+image. I found cv.FitLine(points,
+dist_type, param, reps, aeps) to
+work relatively well at extrapolating the line from the lines found using the Hough
+transform.
+
+Creating
+a Video
+
+Created video on both white Right and Yellow Left
+
+
+white_output = 'white.mp4'
+
+clip1 = VideoFileClip("solidWhiteRight.mp4")
+
+white_clip = clip1.fl_image(process_image) #NOTE: this function
+expects color images!!
+
+%time white_clip.write_videofile(white_output, audio=False)
+
+ 
+
+Potential shortcomings with my current pipeline
+
+
+ Fine tuning the edges
+
+
+Possible improvements to my pipeline
+
+
+ Better tuned Hough transform and edge
+     detection
+ Automatically calculate region
+ Handling Curves.
+
+
+ 
+
